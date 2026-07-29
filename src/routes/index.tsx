@@ -185,10 +185,10 @@ function Index() {
       return "";
     };
 
-    const utmCampaign = getParam("utm_campaign", "campaign_name", "campaign_id", "campaign");
-    const utmMedium = getParam("utm_medium", "adset_name", "adset_id", "adset");
-    const utmContent = getParam("utm_content", "ad_name", "ad_id", "ad");
-    const utmSource = getParam("utm_source", "source", "placement");
+    const utmCampaign = getParam("campaign_id", "campaign.id", "campaignid", "utm_campaign_id", "hsa_cam", "utm_campaign", "campaign_name", "campaign");
+    const utmMedium = getParam("adset_id", "adset.id", "adsetid", "utm_adset_id", "hsa_grp", "utm_medium", "adset_name", "adset");
+    const utmContent = getParam("ad_id", "ad.id", "adid", "utm_ad_id", "hsa_ad", "utm_content", "ad_name", "ad");
+    const utmSource = getParam("placement", "meta_posicionamento", "utm_source", "source");
 
     setUtms({
       utm_source: utmSource,
@@ -327,8 +327,10 @@ interface MultistepFormCardProps {
 function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps) {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [instagram, setInstagram] = useState("");
   const [especialidade, setEspecialidade] = useState("");
@@ -358,6 +360,10 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
   const handleNextStep = () => {
     if (!name || name.trim().length < 3) {
       alert("Por favor, informe seu nome completo.");
+      return;
+    }
+    if (!email || !email.includes("@") || !email.includes(".")) {
+      alert("Por favor, informe um e-mail válido.");
       return;
     }
     if (!phone || phone.replace(/\D/g, "").length < 10) {
@@ -411,8 +417,8 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
     const payload = {
       timestamp: new Date().toLocaleString("pt-BR"),
       name: name,
+      email: email,
       phone: phone,
-      email: `${name.toLowerCase().replace(/\s+/g, "").replace(/[^a-z0-9]/g, "")}@exemplo.com`,
       clinicInstagram: instagram,
       clinicName: instagram,
       objective: gargalo,
@@ -422,6 +428,7 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
       leadType: leadType,
 
       nome: name,
+      e_mail: email,
       whatsapp: phone,
       instagram_clinica: instagram,
       especialidade: especialidade,
@@ -465,7 +472,7 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
     };
 
     try {
-      const WEBHOOK_URL = import.meta.env.VITE_SHEETS_WEBHOOK_URL || "https://script.google.com/macros/s/AKfycbw-ZwzmLZ1kz3GNe-LYBc0VqJrr2OogT1gqWk7Lrfo-f2RUeyMoHNI4O_sdRVGwkHAZ_g/exec";
+      const WEBHOOK_URL = import.meta.env.VITE_SHEETS_WEBHOOK_URL || "https://script.google.com/macros/s/AKfycbzV7rVVZVCUXdm-GbfrSgRdqREgVi9CzA4BEebCPPNaqq2UDBYV2YsHCoomXoUP2YkNuQ/exec";
       
       await fetch(WEBHOOK_URL, {
         method: "POST",
@@ -502,13 +509,11 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
           });
         }
 
-        window.location.href = "https://wa.link/wl1a3w";
+        setIsSubmitted(true);
       }
     } catch (error) {
       console.error("Erro ao enviar lead:", error);
-      if (typeof window !== "undefined") {
-        window.location.href = "https://wa.link/wl1a3w";
-      }
+      setIsSubmitted(true);
     } finally {
       setIsSubmitting(false);
     }
@@ -519,6 +524,80 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
 
   return (
     <div className="rounded-2xl border border-[#DDE2D9] bg-[#F4F6F1] p-6 sm:p-7 shadow-xl relative text-left text-[#050705]">
+      {isSubmitted && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+          <div className="relative w-full max-w-md rounded-2xl border border-[#252A25] bg-[#0B0E0B] p-6 sm:p-8 text-center text-[#FFFFFF] shadow-2xl">
+            <button
+              onClick={() => {
+                setIsSubmitted(false);
+                setStep(1);
+                setName("");
+                setEmail("");
+                setPhone("");
+                setInstagram("");
+                setEspecialidade("");
+                setFaturamento("");
+                setInvestimento("");
+                setGargalo("");
+                setPrazo("");
+              }}
+              className="absolute top-4 right-4 text-[#667066] hover:text-[#FFFFFF] transition-colors p-1"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-[#8CFF00]/15 border border-[#8CFF00]/40 text-[#8CFF00] shadow-[0_0_25px_rgba(140,255,0,0.3)]">
+              <CheckCircle2 className="h-9 w-9" />
+            </div>
+
+            <span className="inline-flex items-center gap-1.5 rounded-md bg-[#8CFF00]/10 px-3 py-1 text-[11px] font-black uppercase tracking-widest text-[#8CFF00] mb-3">
+              Diagnóstico Solicitado
+            </span>
+
+            <h3 className="text-2xl font-black tracking-tight text-[#FFFFFF]">
+              Obrigado pelo envio{name ? `, ${name}` : ''}!
+            </h3>
+
+            <p className="mt-3 text-sm text-[#F4F6F1]/80 leading-relaxed font-medium">
+              Recebemos suas informações com sucesso. Nosso time de especialistas analisará o perfil da sua clínica e entrará em contato via <strong className="text-[#8CFF00]">ligação telefônica</strong> muito em breve.
+            </p>
+
+            <div className="mt-6 rounded-xl border border-[#252A25] bg-[#050705] p-4 text-left space-y-3">
+              <div className="flex items-center gap-3 text-xs font-semibold text-[#F4F6F1]">
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#8CFF00]/20 text-[#8CFF00]">
+                  📞
+                </div>
+                <span><strong>Fique atento ao telefone:</strong> Ligaremos para o número informado no cadastro.</span>
+              </div>
+              <div className="flex items-center gap-3 text-xs font-semibold text-[#F4F6F1]">
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#8CFF00]/20 text-[#8CFF00]">
+                  🎯
+                </div>
+                <span><strong>Próximo passo:</strong> Apresentação do plano tático personalizado para sua clínica.</span>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                setIsSubmitted(false);
+                setStep(1);
+                setName("");
+                setEmail("");
+                setPhone("");
+                setInstagram("");
+                setEspecialidade("");
+                setFaturamento("");
+                setInvestimento("");
+                setGargalo("");
+                setPrazo("");
+              }}
+              className="mt-6 w-full inline-flex h-[52px] items-center justify-center rounded-lg bg-[#8CFF00] font-black uppercase tracking-wider text-[#050705] hover:bg-[#68BF00] transition-all cursor-pointer shadow-md text-xs sm:text-sm"
+            >
+              Entendi, Concluir
+            </button>
+          </div>
+        </div>
+      )}
       <div className="mb-4">
         <div className="flex items-center justify-between mb-2">
           <span className="inline-flex items-center gap-1.5 rounded bg-[#050705] px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-[#8CFF00]">
@@ -560,6 +639,19 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
                 value={name}
                 onFocus={() => trackCustomEvent("FormStart", { form_id: formId })}
                 onChange={e => setName(e.target.value)}
+                className={inputCls} 
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#050705] mb-1">
+                E-mail Principal *
+              </label>
+              <input 
+                required 
+                type="email" 
+                placeholder="Ex: juliana@clinica.com.br" 
+                value={email}
+                onChange={e => setEmail(e.target.value)}
                 className={inputCls} 
               />
             </div>
