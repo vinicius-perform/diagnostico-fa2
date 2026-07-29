@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Letter F -->
+  <rect x="3" y="8" width="4.2" height="16" fill="#FFFFFF"/>
+  <rect x="3" y="8" width="11" height="4" fill="#FFFFFF"/>
+  <rect x="3" y="14" width="8.5" height="3.8" fill="#FFFFFF"/>
+
+  <!-- Letter A -->
+  <!-- Left Leg -->
+  <polygon points="19.5,8 23.5,8 17.5,24 13.5,24" fill="#FFFFFF"/>
+  <!-- Right Leg -->
+  <polygon points="19.5,8 23.5,8 29.5,24 25.5,24" fill="#FFFFFF"/>
+  <!-- Crossbar -->
+  <polygon points="16.8,17.2 26.2,17.2 27.2,21 15.8,21" fill="#FFFFFF"/>
+</svg>
