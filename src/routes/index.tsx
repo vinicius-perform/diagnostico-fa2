@@ -298,11 +298,11 @@ function Hero({ setLeadName, utms }: HeroProps) {
             </div>
 
             <h1 className="mt-4 text-[38px] sm:text-[46px] lg:text-[56px] font-black leading-[1.08] tracking-tight text-[#FFFFFF]">
-              Antes de investir mais em tráfego, descubra onde sua clínica está <span className="text-[#8CFF00]">perdendo dinheiro.</span>
+              Tudo que você investir em tráfego pago será pago pelo faturamento de consultas e <span className="text-[#8CFF00]">ganhe margem nos procedimentos.</span>
             </h1>
 
             <p className="mt-4 text-[17px] sm:text-[19px] lg:text-[20px] leading-relaxed text-[#F4F6F1]/90 font-medium max-w-2xl">
-              Identificamos os gargalos que podem estar reduzindo seus agendamentos, sua conversão em procedimentos e o retorno do investimento em marketing.
+              Preencha o formulário abaixo e em menos de 3 minutos minha equipe entrará em contato com você para um diagnóstico gratuito sem compromisso.
             </p>
           </div>
 
@@ -599,7 +599,7 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
         </div>
       )}
       <div className="mb-4">
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center justify-between">
           <span className="inline-flex items-center gap-1.5 rounded bg-[#050705] px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-[#8CFF00]">
             <Clock className="h-3 w-3" />
             Leva cerca de 1 minuto
@@ -608,12 +608,6 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
             Etapa {step} de 2
           </span>
         </div>
-        <h2 className="text-xl sm:text-2xl font-black text-[#050705] tracking-tight leading-tight">
-          Descubra onde sua clínica está perdendo oportunidades
-        </h2>
-        <p className="mt-1.5 text-xs sm:text-sm text-[#667066] leading-relaxed">
-          Responda algumas perguntas rápidas para nossa equipe analisar o momento da sua operação.
-        </p>
       </div>
 
       <div className="mb-5">
