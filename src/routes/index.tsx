@@ -8,6 +8,8 @@ import {
   Instagram, 
   ChevronDown, 
   ChevronUp, 
+  ChevronLeft,
+  ChevronRight,
   Loader2, 
   X, 
   Lock, 
@@ -93,7 +95,7 @@ const CASE_STUDIES: CaseStudy[] = [
     city: "VILA VELHA/ES",
     specialty: "Harmonização Facial & Corporal",
     videoUrl: "https://fazendoacontecer.site/wp-content/uploads/2026/07/uri_ifs___V_MO7-PeBSuqG1Oeps5YgIKtnJW3-9mhF2JQC4TC9nHHU.webm",
-    thumbnail: "/thumb dr pedro.png",
+    thumbnail: "/thumb dr pedro.webp",
     headline: (
       <>
         Faturou <span className="font-extrabold text-[#8CFF00]">R$ 318 mil</span> em mês de baixa sazonalidade.
@@ -117,7 +119,7 @@ const CASE_STUDIES: CaseStudy[] = [
     city: "BRASÍLIA/DF",
     specialty: "Cirurgia Plástica & Estética Avançada",
     videoUrl: "https://fazendoacontecer.site/wp-content/uploads/2026/07/uri_ifs___V_015JtsY5elTU0ZxaDbcJI6sQBqUYryenRf0yFICm7Gw.webm",
-    thumbnail: "/thumb cris.png",
+    thumbnail: "/thumb cris.webp",
     headline: (
       <>
         Faturou mais de <span className="font-extrabold text-[#8CFF00]">R$ 550 mil</span> nos primeiros 90 dias.
@@ -247,14 +249,11 @@ function Index() {
       {/* 2. PASSO A PASSO */}
       <PassoAPassoSection />
 
-      {/* 3. PROVA, NÃO APENAS PROMESSA */}
+      {/* 3. PROVA, NÃO APENAS PROMESSA (TODOS OS DEPOIMENTOS EM CARROSSEL) */}
       <CasePrincipalSection onOpenVideo={handleOpenVideo} />
 
       {/* 4. ESTE DIAGNÓSTICO FAZ SENTIDO PARA SUA CLÍNICA SE: */}
       <ParaQuemSection />
-
-      {/* 5. RESULTADOS REAIS DE QUEM JÁ APLICOU A ESTRATÉGIA */}
-      <ResultadosReaisSection onOpenVideo={handleOpenVideo} />
 
       {/* 6. PERGUNTAS FREQUENTES */}
       <FaqCurtoSection />
@@ -857,14 +856,21 @@ function PassoAPassoSection() {
   );
 }
 
-// SEÇÃO 3: PROVA, NÃO APENAS PROMESSA
+// SEÇÃO 3: PROVA, NÃO APENAS PROMESSA (TODOS OS DEPOIMENTOS EM CARROSSEL)
 interface CasePrincipalSectionProps {
   onOpenVideo: (url: string) => void;
 }
 
 function CasePrincipalSection({ onOpenVideo }: CasePrincipalSectionProps) {
-  const caseDestaque = CASE_STUDIES[0];
-  
+  const carouselRef = useRef<HTMLDivElement>(null);
+
+  const scroll = (direction: "left" | "right") => {
+    if (carouselRef.current) {
+      const scrollAmount = direction === "left" ? -280 : 280;
+      carouselRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    }
+  };
+
   const scrollToForm = () => {
     trackCustomEvent("MainCaseCTAClick");
     const element = document.getElementById("hero-form-wrapper");
@@ -875,61 +881,76 @@ function CasePrincipalSection({ onOpenVideo }: CasePrincipalSectionProps) {
 
   return (
     <section className="bg-[#050705] border-b border-[#252A25] py-12 lg:py-16 text-[#F4F6F1]">
-      <div className="mx-auto max-w-5xl px-5 sm:px-6">
+      <div className="mx-auto max-w-6xl px-5 sm:px-6">
         
         <div className="text-center mb-8 max-w-3xl mx-auto">
           <span className="inline-flex items-center rounded-md bg-[#0B0E0B] border border-[#252A25] px-3.5 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-[#8CFF00]">
             PROVA, NÃO APENAS PROMESSA
           </span>
           <h2 className="mt-3 text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-[#FFFFFF]">
-            Veja o que acontece quando marketing e vendas trabalham juntos.
+            Veja os resultados de quem já aplicou a estratégia
           </h2>
         </div>
 
-        <div className="rounded-2xl border border-[#252A25] bg-[#0B0E0B] p-6 sm:p-8 flex flex-col md:flex-row items-center gap-8 shadow-xl text-left max-w-4xl mx-auto">
+        {/* Carrossel de Vídeos */}
+        <div className="relative max-w-5xl mx-auto px-2 sm:px-10">
           
-          <div className="w-full md:w-[220px] shrink-0">
-            <div 
-              onClick={() => onOpenVideo(caseDestaque.videoUrl)}
-              className="group relative aspect-[9/16] w-full max-w-[190px] mx-auto rounded-xl border border-[#252A25] bg-[#050705] overflow-hidden cursor-pointer shadow-lg hover:border-[#8CFF00]/60 transition-all"
-            >
-              <img 
-                src={caseDestaque.thumbnail} 
-                alt={`Case ${caseDestaque.name}`} 
-                className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#8CFF00] text-[#050705] shadow-lg group-hover:scale-110 transition-transform">
-                  <Play className="h-5 w-5 fill-[#050705] translate-x-0.5" />
+          <button
+            onClick={() => scroll("left")}
+            className="absolute left-0 sm:left-1 top-1/2 -translate-y-1/2 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-[#252A25] bg-[#0B0E0B]/90 text-[#FFFFFF] shadow-xl hover:border-[#8CFF00] hover:text-[#8CFF00] transition-all cursor-pointer backdrop-blur-sm"
+            aria-label="Anterior"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+
+          <div 
+            ref={carouselRef}
+            className="flex gap-4 sm:gap-6 overflow-x-auto scroll-smooth py-4 px-2 snap-x snap-mandatory"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          >
+            {CASE_STUDIES.map((c) => (
+              <div 
+                key={c.id}
+                onClick={() => onOpenVideo(c.videoUrl)}
+                className="group relative shrink-0 aspect-[9/16] w-[180px] sm:w-[220px] rounded-2xl border border-[#252A25] bg-[#0B0E0B] overflow-hidden cursor-pointer shadow-xl hover:border-[#8CFF00] transition-all duration-300 snap-center"
+              >
+                <img 
+                  src={c.thumbnail} 
+                  alt="Depoimento em vídeo" 
+                  loading="lazy"
+                  decoding="async"
+                  width="220"
+                  height="391"
+                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-[#8CFF00] text-[#050705] shadow-[0_0_20px_rgba(140,255,0,0.4)] group-hover:scale-110 transition-transform">
+                    <Play className="h-5 w-5 sm:h-6 sm:w-6 fill-[#050705] translate-x-0.5" />
+                  </div>
                 </div>
               </div>
-            </div>
+            ))}
           </div>
 
-          <div className="flex-1 flex flex-col justify-center">
-            <h3 className="text-xl sm:text-2xl font-black text-[#FFFFFF]">
-              {caseDestaque.name} <span className="text-sm font-semibold text-[#667066] ml-1">— {caseDestaque.city}</span>
-            </h3>
+          <button
+            onClick={() => scroll("right")}
+            className="absolute right-0 sm:right-1 top-1/2 -translate-y-1/2 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-[#252A25] bg-[#0B0E0B]/90 text-[#FFFFFF] shadow-xl hover:border-[#8CFF00] hover:text-[#8CFF00] transition-all cursor-pointer backdrop-blur-sm"
+            aria-label="Próximo"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
 
-            <div className="mt-3">
-              <span className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#8CFF00] block tracking-tight">
-                {caseDestaque.stats.revenue}
-              </span>
-            </div>
+        </div>
 
-            <div className="mt-6">
-              <button
-                onClick={scrollToForm}
-                className="inline-flex h-[52px] w-full sm:w-auto items-center justify-center gap-2 rounded-lg bg-[#8CFF00] px-7 text-xs font-black uppercase tracking-wider text-[#050705] hover:bg-[#68BF00] transition-all cursor-pointer shadow-md"
-              >
-                QUERO IDENTIFICAR O POTENCIAL DA MINHA CLÍNICA
-                <ArrowRight className="h-4 w-4" />
-              </button>
-            </div>
-
-          </div>
-
+        <div className="mt-8 text-center">
+          <button
+            onClick={scrollToForm}
+            className="inline-flex h-[52px] w-full sm:w-auto items-center justify-center gap-2 rounded-lg bg-[#8CFF00] px-7 text-xs font-black uppercase tracking-wider text-[#050705] hover:bg-[#68BF00] transition-all cursor-pointer shadow-md"
+          >
+            QUERO IDENTIFICAR O POTENCIAL DA MINHA CLÍNICA
+            <ArrowRight className="h-4 w-4" />
+          </button>
         </div>
 
       </div>
@@ -980,88 +1001,7 @@ function ParaQuemSection() {
   );
 }
 
-// SEÇÃO 5: RESULTADOS REAIS DE QUEM JÁ APLICOU A ESTRATÉGIA
-interface ResultadosReaisSectionProps {
-  onOpenVideo: (url: string) => void;
-}
 
-function ResultadosReaisSection({ onOpenVideo }: ResultadosReaisSectionProps) {
-  const scrollToForm = () => {
-    trackCustomEvent("AdditionalProofCTAClick");
-    const element = document.getElementById("hero-form-wrapper");
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
-    }
-  };
-
-  const provas = CASE_STUDIES.slice(1, 4);
-
-  return (
-    <section className="bg-[#050705] border-b border-[#252A25] py-12 lg:py-16 text-[#F4F6F1]">
-      <div className="mx-auto max-w-6xl px-5 sm:px-6">
-        
-        <div className="text-center mb-8 max-w-3xl mx-auto">
-          <span className="inline-flex items-center rounded-md bg-[#0B0E0B] border border-[#252A25] px-3.5 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-[#8CFF00]">
-            OUTRAS OPERAÇÕES
-          </span>
-          <h2 className="mt-3 text-2xl sm:text-3xl font-black tracking-tight text-[#FFFFFF]">
-            Resultados reais de quem já aplicou a estratégia
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto text-left">
-          {provas.map((c) => (
-            <div key={c.id} className="rounded-2xl border border-[#252A25] bg-[#0B0E0B] p-5 flex flex-col justify-between shadow-md hover:border-[#8CFF00]/40 transition-colors">
-              <div>
-                <div 
-                  onClick={() => onOpenVideo(c.videoUrl)}
-                  className="group relative aspect-[9/16] w-full max-w-[170px] mx-auto rounded-xl border border-[#252A25] bg-[#050705] overflow-hidden cursor-pointer mb-4"
-                >
-                  <img 
-                    src={c.thumbnail} 
-                    alt={c.name} 
-                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors" />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#8CFF00] text-[#050705] group-hover:scale-110 transition-transform">
-                      <Play className="h-4 w-4 fill-[#050705] translate-x-0.5" />
-                    </div>
-                  </div>
-                </div>
-
-                <h3 className="text-sm font-extrabold text-[#FFFFFF]">{c.name} <span className="text-xs font-normal text-[#667066] ml-0.5">— {c.city}</span></h3>
-                <span className="block mt-1 text-lg font-black text-[#8CFF00]">{c.stats.revenue}</span>
-              </div>
-
-              <div className="mt-4 pt-3 border-t border-[#252A25]/60">
-                <button
-                  onClick={() => onOpenVideo(c.videoUrl)}
-                  className="w-full h-10 inline-flex items-center justify-center gap-1.5 rounded-lg border border-[#252A25] bg-[#050705] text-xs font-bold text-[#F4F6F1] hover:border-[#8CFF00] hover:text-[#8CFF00] transition-colors cursor-pointer"
-                >
-                  <Play className="h-3.5 w-3.5" />
-                  Assistir depoimento
-                </button>
-              </div>
-
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-8 text-center">
-          <button
-            onClick={scrollToForm}
-            className="inline-flex h-[52px] w-full sm:w-auto items-center justify-center gap-2 rounded-lg bg-[#8CFF00] px-8 text-xs sm:text-sm font-black uppercase tracking-wider text-[#050705] hover:bg-[#68BF00] transition-all cursor-pointer shadow-md"
-          >
-            QUERO UMA ANÁLISE DA MINHA OPERAÇÃO
-            <ArrowRight className="h-4.5 w-4.5" />
-          </button>
-        </div>
-
-      </div>
-    </section>
-  );
-}
 
 // SEÇÃO 6: PERGUNTAS FREQUENTES
 function FaqCurtoSection() {
