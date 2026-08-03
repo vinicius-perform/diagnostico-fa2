@@ -297,7 +297,7 @@ function Hero({ setLeadName, utms }: HeroProps) {
             </div>
 
             <h1 className="mt-4 text-[38px] sm:text-[46px] lg:text-[56px] font-black leading-[1.08] tracking-tight text-[#FFFFFF]">
-              <span className="text-[#8CFF00]">Assumimos esse risco:</span> Seu em tráfego pago será pago pelo <span className="underline decoration-[#8CFF00] decoration-2 underline-offset-4">faturamento de consultas</span> e você terá mais margem nos procedimentos.
+              <span className="text-[#8CFF00]">Assumimos esse risco:</span> Seu tráfego pago será pago pelo <span className="underline decoration-[#8CFF00] decoration-2 underline-offset-4">faturamento de consultas</span> e você terá mais margem nos procedimentos.
             </h1>
 
             <p className="mt-4 text-[17px] sm:text-[19px] lg:text-[20px] leading-relaxed text-[#F4F6F1]/90 font-medium max-w-2xl">
@@ -337,7 +337,6 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
   const [faturamento, setFaturamento] = useState("");
   const [investimento, setInvestimento] = useState("");
   const [gargalo, setGargalo] = useState("");
-  const [prazo, setPrazo] = useState("");
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let input = e.target.value.replace(/\D/g, "");
@@ -385,7 +384,7 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
       alert("Por favor, selecione a principal especialidade.");
       return;
     }
-    if (!faturamento || !investimento || !gargalo || !prazo) {
+    if (!faturamento || !investimento || !gargalo) {
       alert("Por favor, preencha todos os campos da etapa de qualificação.");
       return;
     }
@@ -434,7 +433,6 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
       faturamento_mensal: faturamento,
       investimento_marketing: investimento,
       objetivo_principal: gargalo,
-      prazo_inicio: prazo,
 
       form_used: formId,
       
@@ -538,7 +536,6 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
                 setFaturamento("");
                 setInvestimento("");
                 setGargalo("");
-                setPrazo("");
               }}
               className="absolute top-4 right-4 text-[#667066] hover:text-[#FFFFFF] transition-colors p-1"
             >
@@ -588,7 +585,6 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
                 setFaturamento("");
                 setInvestimento("");
                 setGargalo("");
-                setPrazo("");
               }}
               className="mt-6 w-full inline-flex h-[52px] items-center justify-center rounded-lg bg-[#8CFF00] font-black uppercase tracking-wider text-[#050705] hover:bg-[#68BF00] transition-all cursor-pointer shadow-md text-xs sm:text-sm"
             >
@@ -749,18 +745,6 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
                 <option>Falta de dados</option>
                 <option>Dependência de indicações</option>
                 <option>Não sei identificar</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#050705] mb-1">
-                Prazo Estimado para Iniciar *
-              </label>
-              <select required value={prazo} onChange={e => setPrazo(e.target.value)} className={inputCls}>
-                <option value="" disabled>Selecione um prazo estimado</option>
-                <option>Quero iniciar agora</option>
-                <option>Nos próximos 30 dias</option>
-                <option>Nos próximos 60 a 90 dias</option>
-                <option>Estou pesquisando possibilidades</option>
               </select>
             </div>
 
