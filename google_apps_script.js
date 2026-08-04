@@ -1,6 +1,6 @@
 /**
- * Google Apps Script - Integração Diagnóstico FA (Com suporte UTF-8 e IDs Meta Ads)
- * Mapeamento das colunas A até O:
+ * Google Apps Script - Integração Diagnóstico FA (Com suporte UTF-8, IDs Meta Ads e Distribuição de SDR)
+ * Mapeamento das colunas A até P:
  * A: Data/Hora
  * B: Nome
  * C: Telefone
@@ -16,6 +16,7 @@
  * M: Campanha (ID da Campanha)
  * N: Conjunto (ID do Conjunto de Anúncios)
  * O: Anúncio (ID do Anúncio)
+ * P: SDR
  */
 
 function doPost(e) {
@@ -53,7 +54,19 @@ function doPost(e) {
     var conjunto = data.Conjunto || data.conjunto || data.meta_conjunto || data.adset_id || data.utm_medium || "";
     var anuncio = data["Anúncio"] || data.Anuncio || data.anuncio || data.meta_anuncio || data.ad_id || data.utm_content || "";
 
-    // Linha a ser adicionada na planilha (Colunas A -> O)
+    // Distribuição de SDRs (Rodízio 1 para 1: Jose Sousa -> Carlos Muller)
+    var scriptProperties = PropertiesService.getScriptProperties();
+    var lastSdr = scriptProperties.getProperty("LAST_SDR");
+    
+    var sdrAtribuido = "";
+    if (!lastSdr || lastSdr === "Carlos Muller") {
+      sdrAtribuido = "Jose Sousa";
+    } else {
+      sdrAtribuido = "Carlos Muller";
+    }
+    scriptProperties.setProperty("LAST_SDR", sdrAtribuido);
+
+    // Linha a ser adicionada na planilha (Colunas A -> P)
     var row = [
       dataHora,          // Coluna A (Data/Hora)
       nome,              // Coluna B (Nome)
@@ -69,7 +82,8 @@ function doPost(e) {
       tipoLead,          // Coluna L (Tipo do Lead)
       campanha,          // Coluna M (Campanha - ID)
       conjunto,          // Coluna N (Conjunto - ID)
-      anuncio            // Coluna O (Anúncio - ID)
+      anuncio,           // Coluna O (Anúncio - ID)
+      sdrAtribuido       // Coluna P (SDR)
     ];
 
     sheet.appendRow(row);
@@ -86,5 +100,5 @@ function doPost(e) {
 }
 
 function doGet(e) {
-  return ContentService.createTextOutput("Webhook de diagnóstico ativo com suporte a UTF-8!");
+  return ContentService.createTextOutput("Webhook de diagnóstico ativo com suporte a UTF-8 e distribuição de SDR!");
 }
