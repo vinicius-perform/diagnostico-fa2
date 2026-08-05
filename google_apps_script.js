@@ -1,5 +1,5 @@
 /**
- * Google Apps Script - Integração Diagnóstico FA (Com suporte UTF-8, Meta Ads CAPI & Triggers)
+ * Google Apps Script - Integração Diagnóstico FA (Com suporte UTF-8, Meta Ads CAPI, Triggers e Distribuição SDR)
  * 
  * Mapeamento das colunas A até X:
  * A: Data/Hora
@@ -66,8 +66,21 @@ function doPost(e) {
     var conjunto = data.Conjunto || data.conjunto || data.meta_conjunto || data.adset_id || data.utm_medium || "";
     var anuncio = data["Anúncio"] || data.Anuncio || data.anuncio || data.meta_anuncio || data.ad_id || data.utm_content || "";
 
+    // Distribuição de SDRs (Rodízio 1 para 1: Jose Sousa -> Carlos Muller)
+    var scriptProperties = PropertiesService.getScriptProperties();
+    var lastSdr = scriptProperties.getProperty("LAST_SDR");
+    
+    var sdrAtribuido = data.sdr || "";
+    if (!sdrAtribuido) {
+      if (!lastSdr || lastSdr === "Carlos Muller") {
+        sdrAtribuido = "Jose Sousa";
+      } else {
+        sdrAtribuido = "Carlos Muller";
+      }
+      scriptProperties.setProperty("LAST_SDR", sdrAtribuido);
+    }
+
     // Campos de Operação Comercial
-    var sdr = data.sdr || "";
     var agendamento = data.agendamento || "";
     var venda = data.venda || "";
     var valorConversao = data.valor_conversao || "";
@@ -98,7 +111,7 @@ function doPost(e) {
       campanha,               // Coluna M
       conjunto,               // Coluna N
       anuncio,                // Coluna O
-      sdr,                    // Coluna P
+      sdrAtribuido,           // Coluna P
       agendamento,            // Coluna Q
       venda,                  // Coluna R
       valorConversao,         // Coluna S
@@ -123,7 +136,7 @@ function doPost(e) {
 }
 
 function doGet(e) {
-  return ContentService.createTextOutput("Webhook de diagnóstico FA ativo com suporte a Meta CAPI!");
+  return ContentService.createTextOutput("Webhook de diagnóstico FA ativo com suporte a Meta CAPI e Distribuição de SDR!");
 }
 
 /**
