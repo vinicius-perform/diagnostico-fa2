@@ -178,30 +178,48 @@ function sendMetaCapiEvent(eventName, leadData, customData) {
   try {
     var userData = {};
     
-    if (leadData.email) {
+    if (leadData.email && String(leadData.email).trim() !== "") {
       var hashedEmail = hashSHA256(leadData.email);
       if (hashedEmail) userData.em = [hashedEmail];
     }
     
-    if (leadData.phone) {
+    if (leadData.phone && String(leadData.phone).trim() !== "") {
       var hashedPhone = cleanPhoneNumber(leadData.phone);
       if (hashedPhone) userData.ph = [hashedPhone];
     }
     
-    if (leadData.name) {
-      var nameParts = leadData.name.toString().trim().split(" ");
-      if (nameParts[0]) userData.fn = [hashSHA256(nameParts[0])];
-      if (nameParts.length > 1) userData.ln = [hashSHA256(nameParts.slice(1).join(" "))];
+    if (leadData.name && String(leadData.name).trim() !== "") {
+      var nameParts = String(leadData.name).trim().split(" ");
+      if (nameParts[0]) {
+        var fnHash = hashSHA256(nameParts[0]);
+        if (fnHash) userData.fn = [fnHash];
+      }
+      if (nameParts.length > 1) {
+        var lnHash = hashSHA256(nameParts.slice(1).join(" "));
+        if (lnHash) userData.ln = [lnHash];
+      }
     }
     
-    if (leadData.fbc) userData.fbc = leadData.fbc;
-    if (leadData.fbp) userData.fbp = leadData.fbp;
-    if (leadData.externalId) userData.external_id = [leadData.externalId];
+    if (leadData.fbc && String(leadData.fbc).trim() !== "") {
+      userData.fbc = String(leadData.fbc).trim();
+    }
+    if (leadData.fbp && String(leadData.fbp).trim() !== "") {
+      userData.fbp = String(leadData.fbp).trim();
+    }
+    if (leadData.externalId && String(leadData.externalId).trim() !== "") {
+      var extIdStr = String(leadData.externalId).trim();
+      var hashedExt = hashSHA256(extIdStr);
+      if (hashedExt) userData.external_id = [hashedExt];
+    }
+
+    if (Object.keys(userData).length === 0) {
+      return { error: { message: "Sem dados identificadores do lead (e-mail, telefone ou nome)" } };
+    }
     
     var eventPayload = {
       event_name: eventName,
       event_time: Math.floor(Date.now() / 1000),
-      action_source: "system",
+      action_source: "system_generated",
       user_data: userData
     };
     
@@ -223,8 +241,21 @@ function sendMetaCapiEvent(eventName, leadData, customData) {
     return JSON.parse(responseText);
   } catch (err) {
     Logger.log("Erro no CAPI [" + eventName + "]: " + err.toString());
-    return { error: err.toString() };
+    return { error: { message: err.toString() } };
   }
+}
+
+/**
+ * Auxiliar para extrair mensagem de erro amigável
+ */
+function getMetaErrorMessage(res) {
+  if (!res) return "Erro de envio (Sem resposta)";
+  if (res.error) {
+    if (typeof res.error === "string") return res.error;
+    if (res.error.message) return res.error.message;
+    return JSON.stringify(res.error);
+  }
+  return "Erro de Envio";
 }
 
 /**
@@ -253,8 +284,8 @@ function onEditTrigger(e) {
   var fbc = rowValues[19];             // Coluna T (20)
   var fbp = rowValues[20];             // Coluna U (21)
   var externalId = rowValues[21];      // Coluna V (22)
-  var capiAgendamentoStatus = rowValues[22]; // Coluna W (23)
-  var capiVendaStatus = rowValues[23];       // Coluna X (24)
+  var capiAgendamentoStatus = String(rowValues[22] || ""); // Coluna W (23)
+  var capiVendaStatus = String(rowValues[23] || "");       // Coluna X (24)
   
   var leadData = {
     name: nome,
@@ -267,19 +298,19 @@ function onEditTrigger(e) {
   
   var nowStr = Utilities.formatDate(new Date(), "America/Sao_Paulo", "dd/MM/yyyy HH:mm:ss");
   
-  // Gatilho 1: AGENDAMENTO = Sim
-  if (col === 17 && String(agendamento).trim().toLowerCase() === "sim" && !capiAgendamentoStatus) {
+  // Gatilho 1: AGENDAMENTO = Sim (Executa se ainda não enviado ou se o envio anterior falhou com Erro)
+  if (col === 17 && String(agendamento).trim().toLowerCase() === "sim" && (!capiAgendamentoStatus || capiAgendamentoStatus.indexOf("Erro") !== -1)) {
     var resSchedule = sendMetaCapiEvent("Schedule", leadData, null);
     if (resSchedule && !resSchedule.error && (!resSchedule.events_received || resSchedule.events_received > 0)) {
       sheet.getRange(row, 23).setValue(nowStr + " (Enviado)");
     } else {
-      var errMsg = resSchedule && resSchedule.error ? resSchedule.error.message || JSON.stringify(resSchedule.error) : "Erro de Envio";
+      var errMsg = getMetaErrorMessage(resSchedule);
       sheet.getRange(row, 23).setValue("Erro: " + errMsg);
     }
   }
   
-  // Gatilho 2: VENDA = Sim
-  if (col === 18 && String(venda).trim().toLowerCase() === "sim" && !capiVendaStatus) {
+  // Gatilho 2: VENDA = Sim (Executa se ainda não enviado ou se o envio anterior falhou com Erro)
+  if (col === 18 && String(venda).trim().toLowerCase() === "sim" && (!capiVendaStatus || capiVendaStatus.indexOf("Erro") !== -1)) {
     var rawVal = String(valorConversao).replace("R$", "").replace(/\./g, "").replace(",", ".").trim();
     var numValue = parseFloat(rawVal) || 0;
     
@@ -291,8 +322,8 @@ function onEditTrigger(e) {
     if (resPurchase && !resPurchase.error && (!resPurchase.events_received || resPurchase.events_received > 0)) {
       sheet.getRange(row, 24).setValue(nowStr + " (Enviado)");
     } else {
-      var errMsg = resPurchase && resPurchase.error ? resPurchase.error.message || JSON.stringify(resPurchase.error) : "Erro de Envio";
-      sheet.getRange(row, 24).setValue("Erro: " + errMsg);
+      var errMsg2 = getMetaErrorMessage(resPurchase);
+      sheet.getRange(row, 24).setValue("Erro: " + errMsg2);
     }
   }
 }
