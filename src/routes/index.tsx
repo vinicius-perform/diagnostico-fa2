@@ -412,6 +412,19 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
     else if (score >= 35) leadType = "C";
     else leadType = "D";
 
+    const getCookie = (cName: string) => {
+      if (typeof document === "undefined") return "";
+      const match = document.cookie.match(new RegExp("(?:^|; )" + cName.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, "\\$1") + "=([^;]*)"));
+      return match ? decodeURIComponent(match[1]) : "";
+    };
+
+    let fbcCookie = getCookie("_fbc");
+    if (!fbcCookie && utms.fbclid) {
+      fbcCookie = `fb.1.${Date.now()}.${utms.fbclid}`;
+    }
+    const fbpCookie = getCookie("_fbp");
+    const externalId = `fa_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
     const payload = {
       timestamp: new Date().toLocaleString("pt-BR"),
       name: name,
@@ -435,6 +448,14 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
       objetivo_principal: gargalo,
 
       form_used: formId,
+
+      // Parâmetros Meta Conversions API (CAPI)
+      fbc: fbcCookie,
+      fbp: fbpCookie,
+      external_id: externalId,
+      FBC_FBCLID: fbcCookie,
+      FBP: fbpCookie,
+      EXTERNAL_ID: externalId,
       
       // Meta Ads & UTMs principais
       meta_campanha: utms.meta_campanha || utms.utm_campaign,
@@ -487,12 +508,12 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
             content_name: "Diagnostico Estrategico FA",
             currency: "BRL",
             predicted_lead_type: `Lead ${leadType}`
-          });
+          }, { eventID: externalId });
           win.fbq("trackCustom", "LeadForm", {
             content_name: "Diagnostico Estrategico FA",
             form_used: formId,
             predicted_lead_type: `Lead ${leadType}`
-          });
+          }, { eventID: externalId });
           win.fbq("trackCustom", `Lead ${leadType}`, {
             content_name: "Diagnostico Estrategico FA",
             score: score
