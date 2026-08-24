@@ -41,31 +41,6 @@ interface CaseStudy {
 
 const CASE_STUDIES: CaseStudy[] = [
   {
-    id: "lannay",
-    name: "Dra. Lannay",
-    city: "FORTALEZA/CE",
-    specialty: "Odontologia Estética & Harmonização Facial",
-    videoUrl: "https://fazendoacontecer.site/wp-content/uploads/2026/06/lannay.webm",
-    thumbnail: "/thumb lannay.webp",
-    headline: (
-      <>
-        Multiplicou seus resultados de consultório, saindo de <span className="font-bold">R$ 30 mil</span> para mais de <span className="font-extrabold text-[#8CFF00]">R$ 500 mil/mês</span>.
-      </>
-    ),
-    previousScenario: "A operação passou a trabalhar posicionamento, geração de demanda e acompanhamento comercial na mesma direção.",
-    strategy: "Posicionamento e comunicação, campanhas de aquisição e acompanhamento ativo de leads e resultados.",
-    stats: {
-      investment: "R$ 12 mil",
-      revenue: "Mais de R$ 500 mil em faturamento mensal",
-      roas: "41x Mídia",
-    },
-    actions: [
-      "posicionamento e comunicação;",
-      "campanhas de aquisição;",
-      "acompanhamento dos leads e resultados."
-    ],
-  },
-  {
     id: "marcela",
     name: "Drª Marcela",
     city: "SÃO PAULO/SP",

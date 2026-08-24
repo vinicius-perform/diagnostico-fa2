@@ -172,6 +172,37 @@ function cleanPhoneNumber(phone) {
 }
 
 /**
+ * Converte qualquer valor da planilha (seja número puro ou string formatada em R$) para um float válido
+ */
+function parseCurrencyValue(val) {
+  if (val === null || val === undefined || val === "") return 0;
+  
+  // Se já for um número puro vindo do Google Sheets (ex: 1500.5)
+  if (typeof val === "number") {
+    return isNaN(val) ? 0 : val;
+  }
+  
+  var str = String(val).replace(/R\$/gi, "").trim();
+  if (!str) return 0;
+  
+  // Se contiver ponto e vírgula (ex: "1.500,50")
+  if (str.indexOf(".") !== -1 && str.indexOf(",") !== -1) {
+    if (str.lastIndexOf(",") > str.lastIndexOf(".")) {
+      str = str.replace(/\./g, "").replace(",", ".");
+    } else {
+      str = str.replace(/,/g, "");
+    }
+  } else if (str.indexOf(",") !== -1) {
+    // Se contiver apenas vírgula (ex: "1500,50")
+    str = str.replace(",", ".");
+  }
+  
+  var num = parseFloat(str);
+  return isNaN(num) ? 0 : num;
+}
+
+
+/**
  * Envia um evento offline para a Meta Conversions API (Graph API v21.0)
  */
 function sendMetaCapiEvent(eventName, leadData, customData) {
@@ -216,9 +247,14 @@ function sendMetaCapiEvent(eventName, leadData, customData) {
       return { error: { message: "Sem dados identificadores do lead (e-mail, telefone ou nome)" } };
     }
     
+    // Gerar um event_id único e determinístico para desduplicação automática no Meta CAPI
+    var uniqueId = leadData.externalId || leadData.email || leadData.phone || leadData.name || String(Date.now());
+    var eventId = "fa_" + hashSHA256(String(uniqueId).trim()) + "_" + eventName;
+
     var eventPayload = {
       event_name: eventName,
       event_time: Math.floor(Date.now() / 1000),
+      event_id: eventId,
       action_source: "system_generated",
       user_data: userData
     };
@@ -311,8 +347,7 @@ function onEditTrigger(e) {
   
   // Gatilho 2: VENDA = Sim (Executa se ainda não enviado ou se o envio anterior falhou com Erro)
   if (col === 18 && String(venda).trim().toLowerCase() === "sim" && (!capiVendaStatus || capiVendaStatus.indexOf("Erro") !== -1)) {
-    var rawVal = String(valorConversao).replace("R$", "").replace(/\./g, "").replace(",", ".").trim();
-    var numValue = parseFloat(rawVal) || 0;
+    var numValue = parseCurrencyValue(valorConversao);
     
     var customData = {
       currency: "BRL",
@@ -327,3 +362,102 @@ function onEditTrigger(e) {
     }
   }
 }
+
+/**
+ * Adiciona um menu personalizado na planilha para envio manual em lote dos eventos pendentes
+ */
+function onOpen() {
+  var ui = SpreadsheetApp.getUi();
+  ui.createMenu("🚀 Meta CAPI")
+    .addItem("Enviar Todos os Eventos Pendentes", "processAllPendingCapiEvents")
+    .addToUi();
+}
+
+/**
+ * Função em lote que percorre toda a planilha e envia ao Meta CAPI todos os eventos de Agendamento e Venda
+ * que estejam como "Sim" mas ainda NÃO tenham o status "(Enviado)".
+ */
+function processAllPendingCapiEvents() {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var lastRow = sheet.getLastRow();
+  
+  if (lastRow <= 1) {
+    Logger.log("Nenhum dado encontrado na planilha para processar.");
+    try {
+      SpreadsheetApp.getUi().alert("Nenhum dado encontrado na planilha para processar.");
+    } catch(e) {}
+    return;
+  }
+  
+  var dataRange = sheet.getRange(2, 1, lastRow - 1, 24).getValues();
+  var sentCount = 0;
+  var errorCount = 0;
+  var nowStr = Utilities.formatDate(new Date(), "America/Sao_Paulo", "dd/MM/yyyy HH:mm:ss");
+  
+  for (var i = 0; i < dataRange.length; i++) {
+    var rowValues = dataRange[i];
+    var rowIndex = i + 2; // Linha correspondente na planilha (1-indexed, considerando cabeçalho)
+    
+    var nome = rowValues[1];             // Coluna B (2)
+    var telefone = rowValues[2];         // Coluna C (3)
+    var email = rowValues[3];            // Coluna D (4)
+    var agendamento = rowValues[16];     // Coluna Q (17)
+    var venda = rowValues[17];           // Coluna R (18)
+    var valorConversao = rowValues[18]; // Coluna S (19)
+    var fbc = rowValues[19];             // Coluna T (20)
+    var fbp = rowValues[20];             // Coluna U (21)
+    var externalId = rowValues[21];      // Coluna V (22)
+    var capiAgendamentoStatus = String(rowValues[22] || ""); // Coluna W (23)
+    var capiVendaStatus = String(rowValues[23] || "");       // Coluna X (24)
+    
+    var leadData = {
+      name: nome,
+      phone: telefone,
+      email: email,
+      fbc: fbc,
+      fbp: fbp,
+      externalId: externalId
+    };
+    
+    // 1. Processa Agendamento (Coluna Q == "Sim" e ainda não tem "(Enviado)")
+    if (String(agendamento).trim().toLowerCase() === "sim" && (!capiAgendamentoStatus || capiAgendamentoStatus.indexOf("(Enviado)") === -1)) {
+      var resSchedule = sendMetaCapiEvent("Schedule", leadData, null);
+      if (resSchedule && !resSchedule.error && (!resSchedule.events_received || resSchedule.events_received > 0)) {
+        sheet.getRange(rowIndex, 23).setValue(nowStr + " (Enviado)");
+        sentCount++;
+      } else {
+        var errMsg = getMetaErrorMessage(resSchedule);
+        sheet.getRange(rowIndex, 23).setValue("Erro: " + errMsg);
+        errorCount++;
+      }
+      Utilities.sleep(200); // Pausa de 200ms para evitar exceder limite de requisições
+    }
+    
+    // 2. Processa Venda (Coluna R == "Sim" e ainda não tem "(Enviado)")
+    if (String(venda).trim().toLowerCase() === "sim" && (!capiVendaStatus || capiVendaStatus.indexOf("(Enviado)") === -1)) {
+      var numValue = parseCurrencyValue(valorConversao);
+      
+      var customData = {
+        currency: "BRL",
+        value: numValue
+      };
+      var resPurchase = sendMetaCapiEvent("Purchase", leadData, customData);
+      if (resPurchase && !resPurchase.error && (!resPurchase.events_received || resPurchase.events_received > 0)) {
+        sheet.getRange(rowIndex, 24).setValue(nowStr + " (Enviado)");
+        sentCount++;
+      } else {
+        var errMsg2 = getMetaErrorMessage(resPurchase);
+        sheet.getRange(rowIndex, 24).setValue("Erro: " + errMsg2);
+        errorCount++;
+      }
+      Utilities.sleep(200); // Pausa de 200ms
+    }
+  }
+  
+  var msg = "Processamento em lote concluído! Eventos enviados com sucesso: " + sentCount + " | Erros: " + errorCount;
+  Logger.log(msg);
+  try {
+    SpreadsheetApp.getUi().alert(msg);
+  } catch(e) {}
+}
+
