@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef, type FormEvent, type ReactNode } from "react";
 import { 
   ArrowRight, 
-  ArrowLeft, 
   Play, 
   Check, 
   Instagram, 
@@ -291,7 +290,7 @@ function Hero({ setLeadName, utms }: HeroProps) {
   );
 }
 
-// FORMULÁRIO 2 ETAPAS REUTILIZADO
+// FORMULÁRIO DE CADASTRO (ETAPA ÚNICA - 5 CAMPOS)
 interface MultistepFormCardProps {
   setLeadName: (val: string) => void;
   utms: any;
@@ -299,7 +298,6 @@ interface MultistepFormCardProps {
 }
 
 function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps) {
-  const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
@@ -307,11 +305,7 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [instagram, setInstagram] = useState("");
-  const [especialidade, setEspecialidade] = useState("");
-  
   const [faturamento, setFaturamento] = useState("");
-  const [investimento, setInvestimento] = useState("");
-  const [gargalo, setGargalo] = useState("");
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let input = e.target.value.replace(/\D/g, "");
@@ -330,7 +324,9 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
     setPhone(formatted || input);
   };
 
-  const handleNextStep = () => {
+  const onSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    
     if (!name || name.trim().length < 3) {
       alert("Por favor, informe seu nome completo.");
       return;
@@ -343,49 +339,17 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
       alert("Por favor, informe um WhatsApp válido com DDD.");
       return;
     }
-    
-    trackCustomEvent("FormStepComplete", { step: 1, form_id: formId });
-    setStep(2);
-  };
-
-  const onSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    
     if (!instagram || instagram.trim().length < 2) {
       alert("Por favor, informe o Instagram da clínica.");
       return;
     }
-    if (!especialidade) {
-      alert("Por favor, selecione a principal especialidade.");
-      return;
-    }
-    if (!faturamento || !investimento || !gargalo) {
-      alert("Por favor, preencha todos os campos da etapa de qualificação.");
+    if (!faturamento) {
+      alert("Por favor, selecione a faixa de faturamento mensal.");
       return;
     }
 
     setIsSubmitting(true);
     setLeadName(name);
-
-    let score = 0;
-    if (faturamento === "Entre R$ 35 mil e R$ 60 mil") score += 20;
-    else if (faturamento === "Entre R$ 60 mil e R$ 100 mil") score += 40;
-    else if (faturamento === "Entre R$ 100 mil e R$ 200 mil") score += 60;
-    else if (faturamento === "Entre R$ 200 mil e R$ 500 mil") score += 80;
-    else if (faturamento === "Acima de R$ 500 mil") score += 100;
-
-    if (investimento === "Ainda não invisto") score += 5;
-    else if (investimento === "Até R$ 3 mil") score += 10;
-    else if (investimento === "Entre R$ 3 mil e R$ 7 mil") score += 20;
-    else if (investimento === "Entre R$ 7 mil e R$ 15 mil") score += 30;
-    else if (investimento === "Acima de R$ 15 mil") score += 40;
-    else score += 5;
-
-    let leadType: "A" | "B" | "C" | "D" = "C";
-    if (score >= 90) leadType = "A";
-    else if (score >= 60) leadType = "B";
-    else if (score >= 35) leadType = "C";
-    else leadType = "D";
 
     const getCookie = (cName: string) => {
       if (typeof document === "undefined") return "";
@@ -407,20 +371,20 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
       phone: phone,
       clinicInstagram: instagram,
       clinicName: instagram,
-      objective: gargalo,
+      objective: "",
       revenue: faturamento,
-      traffic: investimento,
-      score: score,
-      leadType: leadType,
+      traffic: "",
+      score: "",
+      leadType: "",
 
       nome: name,
       e_mail: email,
       whatsapp: phone,
       instagram_clinica: instagram,
-      especialidade: especialidade,
+      especialidade: "",
       faturamento_mensal: faturamento,
-      investimento_marketing: investimento,
-      objetivo_principal: gargalo,
+      investimento_marketing: "",
+      objetivo_principal: "",
 
       form_used: formId,
 
@@ -481,24 +445,17 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
         if (typeof win.fbq === "function") {
           win.fbq("track", "Lead", {
             content_name: "Diagnostico Estrategico FA",
-            currency: "BRL",
-            predicted_lead_type: `Lead ${leadType}`
+            currency: "BRL"
           }, { eventID: externalId });
           win.fbq("trackCustom", "LeadForm", {
             content_name: "Diagnostico Estrategico FA",
-            form_used: formId,
-            predicted_lead_type: `Lead ${leadType}`
+            form_used: formId
           }, { eventID: externalId });
-          win.fbq("trackCustom", `Lead ${leadType}`, {
-            content_name: "Diagnostico Estrategico FA",
-            score: score
-          });
         }
         if (win.dataLayer && Array.isArray(win.dataLayer)) {
           win.dataLayer.push({
             event: "lead_form_submitted",
-            form_used: formId,
-            lead_type: `Lead ${leadType}`
+            form_used: formId
           });
         }
 
@@ -523,15 +480,11 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
             <button
               onClick={() => {
                 setIsSubmitted(false);
-                setStep(1);
                 setName("");
                 setEmail("");
                 setPhone("");
                 setInstagram("");
-                setEspecialidade("");
                 setFaturamento("");
-                setInvestimento("");
-                setGargalo("");
               }}
               className="absolute top-4 right-4 text-[#667066] hover:text-[#FFFFFF] transition-colors p-1"
             >
@@ -572,15 +525,11 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
             <button
               onClick={() => {
                 setIsSubmitted(false);
-                setStep(1);
                 setName("");
                 setEmail("");
                 setPhone("");
                 setInstagram("");
-                setEspecialidade("");
                 setFaturamento("");
-                setInvestimento("");
-                setGargalo("");
               }}
               className="mt-6 w-full inline-flex h-[52px] items-center justify-center rounded-lg bg-[#8CFF00] font-black uppercase tracking-wider text-[#050705] hover:bg-[#68BF00] transition-all cursor-pointer shadow-md text-xs sm:text-sm"
             >
@@ -589,188 +538,105 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
           </div>
         </div>
       )}
-      <div className="mb-4">
-        <div className="flex items-center justify-between">
-          <span className="inline-flex items-center gap-1.5 rounded bg-[#050705] px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-[#8CFF00]">
-            <Clock className="h-3 w-3" />
-            Leva cerca de 1 minuto
-          </span>
-          <span className="text-[11px] font-bold uppercase tracking-wider text-[#667066]">
-            Etapa {step} de 2
-          </span>
-        </div>
-      </div>
-
-      <div className="mb-5">
-        <div className="h-2 w-full bg-[#DDE2D9] rounded-full overflow-hidden">
-          <div 
-            className="h-full bg-[#8CFF00] transition-all duration-300 rounded-full"
-            style={{ width: `${(step / 2) * 100}%` }}
-          />
-        </div>
+      <div className="mb-5 flex items-center justify-between">
+        <span className="inline-flex items-center gap-1.5 rounded bg-[#050705] px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-[#8CFF00]">
+          <Clock className="h-3 w-3" />
+          Leva cerca de 1 minuto
+        </span>
+        <span className="text-[11px] font-bold uppercase tracking-wider text-[#667066]">
+          Diagnóstico Gratuito
+        </span>
       </div>
 
       <form onSubmit={onSubmit} className="space-y-3.5">
-        {step === 1 && (
-          <div className="space-y-3.5 animate-fade-in">
-            <div>
-              <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#050705] mb-1">
-                Nome Completo *
-              </label>
-              <input 
-                required 
-                type="text" 
-                placeholder="Ex: Dra. Juliana Souza" 
-                value={name}
-                onFocus={() => trackCustomEvent("FormStart", { form_id: formId })}
-                onChange={e => setName(e.target.value)}
-                className={inputCls} 
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#050705] mb-1">
-                E-mail Principal *
-              </label>
-              <input 
-                required 
-                type="email" 
-                placeholder="Ex: juliana@clinica.com.br" 
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                className={inputCls} 
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#050705] mb-1">
-                WhatsApp com DDD *
-              </label>
-              <input 
-                required 
-                type="tel" 
-                placeholder="Ex: (11) 99999-9999" 
-                value={phone}
-                onChange={handlePhoneChange}
-                className={inputCls} 
-              />
-            </div>
-            
-            <button
-              type="button"
-              onClick={handleNextStep}
-              className="mt-2 w-full inline-flex h-[54px] items-center justify-center gap-2 rounded-lg bg-[#8CFF00] px-6 text-xs sm:text-sm font-black uppercase tracking-wider text-[#050705] transition-all hover:bg-[#68BF00] cursor-pointer shadow-md"
-            >
-              CONTINUAR PARA MINHA ANÁLISE
+        <div>
+          <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#050705] mb-1">
+            Nome Completo *
+          </label>
+          <input 
+            required 
+            type="text" 
+            placeholder="Ex: Dra. Juliana Souza" 
+            value={name}
+            onFocus={() => trackCustomEvent("FormStart", { form_id: formId })}
+            onChange={e => setName(e.target.value)}
+            className={inputCls} 
+          />
+        </div>
+
+        <div>
+          <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#050705] mb-1">
+            E-mail Principal *
+          </label>
+          <input 
+            required 
+            type="email" 
+            placeholder="Ex: juliana@clinica.com.br" 
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            className={inputCls} 
+          />
+        </div>
+
+        <div>
+          <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#050705] mb-1">
+            WhatsApp com DDD *
+          </label>
+          <input 
+            required 
+            type="tel" 
+            placeholder="Ex: (11) 99999-9999" 
+            value={phone}
+            onChange={handlePhoneChange}
+            className={inputCls} 
+          />
+        </div>
+
+        <div>
+          <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#050705] mb-1">
+            Instagram da Clínica *
+          </label>
+          <input 
+            required 
+            type="text" 
+            placeholder="Ex: @clinicasouzaestetica" 
+            value={instagram}
+            onChange={e => setInstagram(e.target.value)}
+            className={inputCls} 
+          />
+        </div>
+
+        <div>
+          <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#050705] mb-1">
+            Faturamento Médio Mensal *
+          </label>
+          <select required value={faturamento} onChange={e => setFaturamento(e.target.value)} className={inputCls}>
+            <option value="" disabled>Selecione a faixa de faturamento</option>
+            <option>Entre R$ 35 mil e R$ 60 mil</option>
+            <option>Entre R$ 60 mil e R$ 100 mil</option>
+            <option>Entre R$ 100 mil e R$ 200 mil</option>
+            <option>Entre R$ 200 mil e R$ 500 mil</option>
+            <option>Acima de R$ 500 mil</option>
+          </select>
+        </div>
+
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="mt-2 w-full inline-flex h-[54px] items-center justify-center gap-2 rounded-lg bg-[#8CFF00] px-6 text-xs sm:text-sm font-black uppercase tracking-wider text-[#050705] transition-all hover:bg-[#68BF00] cursor-pointer shadow-md disabled:opacity-50"
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Processando...
+            </>
+          ) : (
+            <>
+              SOLICITAR MEU DIAGNÓSTICO GRATUITO
               <ArrowRight className="h-4.5 w-4.5" />
-            </button>
-          </div>
-        )}
-
-        {step === 2 && (
-          <div className="space-y-3 animate-fade-in">
-            <div>
-              <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#050705] mb-1">
-                Instagram da Clínica *
-              </label>
-              <input 
-                required 
-                type="text" 
-                placeholder="Ex: @clinicasouzaestetica" 
-                value={instagram}
-                onChange={e => setInstagram(e.target.value)}
-                className={inputCls} 
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#050705] mb-1">
-                Principal Especialidade *
-              </label>
-              <select required value={especialidade} onChange={e => setEspecialidade(e.target.value)} className={inputCls}>
-                <option value="" disabled>Selecione uma especialidade</option>
-                <option>Harmonização facial</option>
-                <option>Full Face / Face to Face</option>
-                <option>Harmonização corporal</option>
-                <option>Remodelação corporal</option>
-                <option>Procedimentos glúteos</option>
-                <option>Odontologia estética</option>
-                <option>Dermatologia estética</option>
-                <option>Cirurgia plástica</option>
-                <option>Emagrecimento</option>
-                <option>Estética avançada</option>
-                <option>Outra especialidade</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#050705] mb-1">
-                Faturamento Médio Mensal *
-              </label>
-              <select required value={faturamento} onChange={e => setFaturamento(e.target.value)} className={inputCls}>
-                <option value="" disabled>Selecione a faixa de faturamento</option>
-                <option>Entre R$ 35 mil e R$ 60 mil</option>
-                <option>Entre R$ 60 mil e R$ 100 mil</option>
-                <option>Entre R$ 100 mil e R$ 200 mil</option>
-                <option>Entre R$ 200 mil e R$ 500 mil</option>
-                <option>Acima de R$ 500 mil</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#050705] mb-1">
-                Investimento Atual em Marketing *
-              </label>
-              <select required value={investimento} onChange={e => setInvestimento(e.target.value)} className={inputCls}>
-                <option value="" disabled>Selecione a verba de anúncios</option>
-                <option>Ainda não invisto</option>
-                <option>Até R$ 3 mil</option>
-                <option>Entre R$ 3 mil e R$ 7 mil</option>
-                <option>Entre R$ 7 mil e R$ 15 mil</option>
-                <option>Acima de R$ 15 mil</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#050705] mb-1">
-                Principal Gargalo da Operação *
-              </label>
-              <select required value={gargalo} onChange={e => setGargalo(e.target.value)} className={inputCls}>
-                <option value="" disabled>Qual o maior desafio hoje?</option>
-                <option>Posicionamento e conteúdo</option>
-                <option>Geração de leads</option>
-                <option>Qualidade dos leads</option>
-                <option>Agendamento de consultas</option>
-                <option>Atendimento dos contatos</option>
-                <option>Follow-up</option>
-                <option>Conversão em procedimentos</option>
-                <option>Falta de dados</option>
-                <option>Dependência de indicações</option>
-                <option>Não sei identificar</option>
-              </select>
-            </div>
-
-            <div className="flex gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setStep(1)}
-                className="inline-flex h-[54px] w-14 shrink-0 items-center justify-center rounded-lg border border-[#DDE2D9] bg-[#FFFFFF] text-[#050705] hover:bg-[#DDE2D9] transition-all cursor-pointer"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="inline-flex h-[54px] flex-grow items-center justify-center gap-2 rounded-lg bg-[#8CFF00] px-4 text-xs sm:text-sm font-black uppercase tracking-wider text-[#050705] transition-all hover:bg-[#68BF00] cursor-pointer shadow-md disabled:opacity-50"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Processando...
-                  </>
-                ) : (
-                  <>
-                    QUERO IDENTIFICAR MEUS GARGALOS
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        )}
+            </>
+          )}
+        </button>
 
         <div className="mt-4 pt-3 border-t border-[#DDE2D9] text-center space-y-1">
           <p className="text-xs font-bold text-[#050705]">
@@ -873,11 +739,11 @@ function CasePrincipalSection({ onOpenVideo }: CasePrincipalSectionProps) {
         </div>
 
         {/* Carrossel de Vídeos */}
-        <div className="relative max-w-5xl mx-auto px-2 sm:px-10">
+        <div className="relative max-w-4xl mx-auto px-2 sm:px-10">
           
           <button
             onClick={() => scroll("left")}
-            className="absolute left-0 sm:left-1 top-1/2 -translate-y-1/2 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-[#252A25] bg-[#0B0E0B]/90 text-[#FFFFFF] shadow-xl hover:border-[#8CFF00] hover:text-[#8CFF00] transition-all cursor-pointer backdrop-blur-sm"
+            className="md:hidden absolute left-0 top-1/2 -translate-y-1/2 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-[#252A25] bg-[#0B0E0B]/90 text-[#FFFFFF] shadow-xl hover:border-[#8CFF00] hover:text-[#8CFF00] transition-all cursor-pointer backdrop-blur-sm"
             aria-label="Anterior"
           >
             <ChevronLeft className="h-5 w-5" />
@@ -885,22 +751,22 @@ function CasePrincipalSection({ onOpenVideo }: CasePrincipalSectionProps) {
 
           <div 
             ref={carouselRef}
-            className="flex gap-4 sm:gap-6 overflow-x-auto scroll-smooth py-4 px-2 snap-x snap-mandatory"
+            className="flex gap-4 sm:gap-6 overflow-x-auto scroll-smooth py-4 px-2 snap-x snap-mandatory justify-start md:justify-center items-center"
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
             {CASE_STUDIES.map((c) => (
               <div 
                 key={c.id}
                 onClick={() => onOpenVideo(c.videoUrl)}
-                className="group relative shrink-0 aspect-[9/16] w-[180px] sm:w-[220px] rounded-2xl border border-[#252A25] bg-[#0B0E0B] overflow-hidden cursor-pointer shadow-xl hover:border-[#8CFF00] transition-all duration-300 snap-center"
+                className="group relative shrink-0 aspect-[9/16] w-[200px] sm:w-[230px] md:w-[240px] rounded-2xl border border-[#252A25] bg-[#0B0E0B] overflow-hidden cursor-pointer shadow-xl hover:border-[#8CFF00] transition-all duration-300 snap-center"
               >
                 <img 
                   src={c.thumbnail} 
                   alt="Depoimento em vídeo" 
                   loading="lazy"
                   decoding="async"
-                  width="220"
-                  height="391"
+                  width="240"
+                  height="426"
                   className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors" />
@@ -915,7 +781,7 @@ function CasePrincipalSection({ onOpenVideo }: CasePrincipalSectionProps) {
 
           <button
             onClick={() => scroll("right")}
-            className="absolute right-0 sm:right-1 top-1/2 -translate-y-1/2 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-[#252A25] bg-[#0B0E0B]/90 text-[#FFFFFF] shadow-xl hover:border-[#8CFF00] hover:text-[#8CFF00] transition-all cursor-pointer backdrop-blur-sm"
+            className="md:hidden absolute right-0 top-1/2 -translate-y-1/2 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-[#252A25] bg-[#0B0E0B]/90 text-[#FFFFFF] shadow-xl hover:border-[#8CFF00] hover:text-[#8CFF00] transition-all cursor-pointer backdrop-blur-sm"
             aria-label="Próximo"
           >
             <ChevronRight className="h-5 w-5" />
