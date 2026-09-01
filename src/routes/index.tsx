@@ -7,12 +7,12 @@ import {
   Instagram, 
   ChevronDown, 
   ChevronUp, 
-  ChevronLeft,
-  ChevronRight,
+  ChevronLeft, 
+  ChevronRight, 
   Loader2, 
   X, 
   Lock, 
-  Clock,
+  Clock, 
   CheckCircle2
 } from "lucide-react";
 
@@ -219,6 +219,9 @@ function Index() {
 
       {/* 1. HERO COM FORMULÁRIO */}
       <Hero setLeadName={setLeadName} utms={utms} />
+
+      {/* CASE DE SUCESSO: DRA. SAMARA */}
+      <CaseDraSamaraSection />
 
       {/* 2. PASSO A PASSO */}
       <PassoAPassoSection />
@@ -652,6 +655,71 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
   );
 }
 
+// SEÇÃO DE DESTAQUE: CASE DRA. SAMARA (ABAIXO DO HERO)
+function CaseDraSamaraSection() {
+  const scrollToForm = () => {
+    trackCustomEvent("SamaraCaseCTAClick");
+    const element = document.getElementById("hero-form-wrapper");
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  return (
+    <section className="bg-[#080B08] border-b border-[#252A25] py-14 lg:py-20 text-[#F4F6F1] relative overflow-hidden">
+      {/* Luz ambiente sutil de fundo */}
+      <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[500px] h-[500px] bg-[#8CFF00]/5 rounded-full blur-[140px] pointer-events-none" />
+
+      <div className="relative z-10 mx-auto max-w-6xl px-5 sm:px-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+          
+          {/* Lado Esquerdo: Textos e Chamada para Ação */}
+          <div className="lg:col-span-7 flex flex-col items-start text-left space-y-6">
+            <span className="inline-flex items-center gap-1.5 rounded-md bg-[#0B0E0B] border border-[#252A25] px-3.5 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-[#8CFF00] shadow-sm">
+              PROVA, NÃO APENAS PROMESSA
+            </span>
+            
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-[40px] font-black tracking-tight text-[#FFFFFF] leading-[1.18]">
+              Como a Dra. Samara ultrapassou <span className="text-[#8CFF00]">R$ 200 mil</span> de faturamento no primeiro mês de parceria com a FA
+            </h2>
+
+            <p className="text-sm sm:text-base lg:text-lg text-[#F4F6F1]/80 leading-relaxed font-medium">
+              Veja como o alinhamento entre tráfego e vendas fez o investimento se pagar apenas com o volume de novas consultas.
+            </p>
+
+            <div className="pt-2 w-full sm:w-auto">
+              <button
+                onClick={scrollToForm}
+                className="w-full sm:w-auto inline-flex h-[54px] items-center justify-center gap-2.5 rounded-lg bg-[#8CFF00] px-8 text-xs sm:text-sm font-black uppercase tracking-wider text-[#050705] transition-all hover:bg-[#68BF00] cursor-pointer shadow-lg hover:shadow-[0_0_25px_rgba(140,255,0,0.4)]"
+              >
+                QUERO IDENTIFICAR O POTENCIAL DA MINHA CLÍNICA
+                <ArrowRight className="h-4.5 w-4.5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Lado Direito: Vídeo do Depoimento */}
+          <div className="lg:col-span-5 flex flex-col items-center justify-center">
+            <div className="relative w-full max-w-[300px] sm:max-w-[340px] aspect-[9/16] rounded-2xl border-2 border-[#252A25] bg-[#050705] overflow-hidden shadow-[0_0_35px_rgba(140,255,0,0.15)] group hover:border-[#8CFF00]/60 transition-all duration-300">
+              <video
+                src="https://fazendoacontecer.site/wp-content/uploads/2026/09/dep-samara.webm"
+                controls
+                playsInline
+                preload="metadata"
+                className="w-full h-full object-cover rounded-2xl"
+              />
+            </div>
+            <span className="mt-3 text-xs font-bold text-[#667066] uppercase tracking-wider flex items-center gap-1.5">
+              <Play className="h-3.5 w-3.5 fill-[#8CFF00] text-[#8CFF00]" /> Assista ao relato completo
+            </span>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // SEÇÃO 2: PASSO A PASSO
 function PassoAPassoSection() {
   const etapas = [
@@ -767,14 +835,8 @@ function CasePrincipalSection({ onOpenVideo }: CasePrincipalSectionProps) {
                   decoding="async"
                   width="240"
                   height="426"
-                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-[#8CFF00] text-[#050705] shadow-[0_0_20px_rgba(140,255,0,0.4)] group-hover:scale-110 transition-transform">
-                    <Play className="h-5 w-5 sm:h-6 sm:w-6 fill-[#050705] translate-x-0.5" />
-                  </div>
-                </div>
               </div>
             ))}
           </div>
