@@ -367,7 +367,7 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
     const fbpCookie = getCookie("_fbp");
     const externalId = `fa_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
-    // Classificação exclusiva pelo faturamento para a Coluna L da planilha:
+    // Classificação dos leads com base exclusiva no faturamento (Coluna L: A, B ou C)
     // ainda nao fatura 35 mil: C
     // fatura de 35 a 50 mil: B
     // fatura acima de 50 mil: A
