@@ -367,6 +367,20 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
     const fbpCookie = getCookie("_fbp");
     const externalId = `fa_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
+    // Classificação exclusiva pelo faturamento para a Coluna L da planilha:
+    // ainda nao fatura 35 mil: C
+    // fatura de 35 a 50 mil: B
+    // fatura acima de 50 mil: A
+    let leadClass: "A" | "B" | "C" = "C";
+    const fatLower = faturamento.toLowerCase();
+    if (fatLower.includes("acima de 50") || fatLower.includes("> 50") || fatLower.includes("mais de 50")) {
+      leadClass = "A";
+    } else if ((fatLower.includes("35") && fatLower.includes("50")) || fatLower.includes("35 a 50") || fatLower.includes("35 à 50")) {
+      leadClass = "B";
+    } else {
+      leadClass = "C";
+    }
+
     const payload = {
       timestamp: new Date().toLocaleString("pt-BR"),
       name: name,
@@ -378,7 +392,7 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
       revenue: faturamento,
       traffic: "",
       score: "",
-      leadType: "",
+      leadType: leadClass,
 
       nome: name,
       e_mail: email,
@@ -388,6 +402,8 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
       faturamento_mensal: faturamento,
       investimento_marketing: "",
       objetivo_principal: "",
+      tipo_lead: leadClass,
+      lead_type: leadClass,
 
       form_used: formId,
 
@@ -446,18 +462,33 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
       if (typeof window !== "undefined") {
         const win = window as any;
         if (typeof win.fbq === "function") {
+          // Evento padrão Lead
           win.fbq("track", "Lead", {
             content_name: "Diagnostico Estrategico FA",
-            currency: "BRL"
+            currency: "BRL",
+            lead_class: leadClass
           }, { eventID: externalId });
+
+          // Evento específico solicitado: "Lead A", "Lead B" ou "Lead C"
+          const leadCustomEvent = `Lead ${leadClass}`;
+          win.fbq("trackCustom", leadCustomEvent, {
+            content_name: "Diagnostico Estrategico FA",
+            lead_class: leadClass,
+            faturamento: faturamento,
+            form_used: formId
+          }, { eventID: `${externalId}_${leadClass}` });
+
           win.fbq("trackCustom", "LeadForm", {
             content_name: "Diagnostico Estrategico FA",
-            form_used: formId
+            form_used: formId,
+            lead_class: leadClass
           }, { eventID: externalId });
         }
         if (win.dataLayer && Array.isArray(win.dataLayer)) {
           win.dataLayer.push({
             event: "lead_form_submitted",
+            lead_class: leadClass,
+            custom_event: `Lead ${leadClass}`,
             form_used: formId
           });
         }
@@ -615,11 +646,9 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
           </label>
           <select required value={faturamento} onChange={e => setFaturamento(e.target.value)} className={inputCls}>
             <option value="" disabled>Selecione a faixa de faturamento</option>
-            <option>Entre R$ 35 mil e R$ 60 mil</option>
-            <option>Entre R$ 60 mil e R$ 100 mil</option>
-            <option>Entre R$ 100 mil e R$ 200 mil</option>
-            <option>Entre R$ 200 mil e R$ 500 mil</option>
-            <option>Acima de R$ 500 mil</option>
+            <option value="Ainda não atinjo 35 mil por mês">Ainda não atinjo 35 mil por mês</option>
+            <option value="Faturo de 35 à 50 mil reais por mês">Faturo de 35 à 50 mil reais por mês</option>
+            <option value="Faturo acima de 50 mil reais por mês">Faturo acima de 50 mil reais por mês</option>
           </select>
         </div>
 

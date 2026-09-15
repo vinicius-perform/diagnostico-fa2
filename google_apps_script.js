@@ -59,7 +59,22 @@ function doPost(e) {
     var trafegoPago = data.investimento_marketing || data.traffic || "";
     var prazoInicio = data.prazo_inicio || "";
     var scorePontos = data.score !== undefined ? data.score : "";
-    var tipoLead = data.leadType || "";
+    var tipoLead = data.leadType || data.tipo_lead || data.lead_type || "";
+    
+    // Classificação estrita pelo faturamento para a Coluna L (caso venha vazio):
+    // ainda nao fatura 35 mil: C
+    // fatura de 35 a 50 mil: B
+    // fatura acima de 50 mil: A
+    if (!tipoLead && faturamento) {
+      var fatLower = String(faturamento).toLowerCase();
+      if (fatLower.indexOf("acima de 50") !== -1 || fatLower.indexOf("> 50") !== -1 || fatLower.indexOf("mais de 50") !== -1) {
+        tipoLead = "A";
+      } else if ((fatLower.indexOf("35") !== -1 && fatLower.indexOf("50") !== -1) || fatLower.indexOf("35 a 50") !== -1 || fatLower.indexOf("35 à 50") !== -1) {
+        tipoLead = "B";
+      } else {
+        tipoLead = "C";
+      }
+    }
     
     // IDs de Campanha, Conjunto e Anúncio enviados pelo Meta Ads / Pixel
     var campanha = data.Campanha || data.campanha || data.meta_campanha || data.campaign_id || data.utm_campaign || "";
