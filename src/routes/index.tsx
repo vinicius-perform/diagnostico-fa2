@@ -510,7 +510,7 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
             lead_class: leadClass
           }, { eventID: externalId });
 
-          // Evento específico solicitado: "Lead A", "Lead B", "Lead C" ou "Lead D"
+          // Evento específico por faixa: "Lead A", "Lead B", "Lead C" ou "Lead D"
           const leadCustomEvent = `Lead ${leadClass}`;
           win.fbq("trackCustom", leadCustomEvent, {
             content_name: "Diagnostico Estrategico FA",
@@ -519,6 +519,23 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
             form_used: formId
           }, { eventID: `${externalId}_${leadClass}` });
 
+          // Evento de qualificação Meta: "Super Lead" (Lead A) e "Lead Qualificado" (Lead B e C)
+          if (leadClass === "A") {
+            win.fbq("trackCustom", "Super Lead", {
+              content_name: "Diagnostico Estrategico FA",
+              lead_class: "A",
+              faturamento: faturamento,
+              form_used: formId
+            }, { eventID: `${externalId}_super_lead` });
+          } else if (leadClass === "B" || leadClass === "C") {
+            win.fbq("trackCustom", "Lead Qualificado", {
+              content_name: "Diagnostico Estrategico FA",
+              lead_class: leadClass,
+              faturamento: faturamento,
+              form_used: formId
+            }, { eventID: `${externalId}_lead_qualificado` });
+          }
+
           win.fbq("trackCustom", "LeadForm", {
             content_name: "Diagnostico Estrategico FA",
             form_used: formId,
@@ -526,12 +543,27 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
           }, { eventID: externalId });
         }
         if (win.dataLayer && Array.isArray(win.dataLayer)) {
+          const qualName = leadClass === "A" ? "Super Lead" : (leadClass === "B" || leadClass === "C") ? "Lead Qualificado" : "Lead Desqualificado";
           win.dataLayer.push({
             event: "lead_form_submitted",
             lead_class: leadClass,
             custom_event: `Lead ${leadClass}`,
+            qualification_status: qualName,
             form_used: formId
           });
+          if (leadClass === "A") {
+            win.dataLayer.push({
+              event: "super_lead",
+              lead_class: "A",
+              form_used: formId
+            });
+          } else if (leadClass === "B" || leadClass === "C") {
+            win.dataLayer.push({
+              event: "lead_qualificado",
+              lead_class: leadClass,
+              form_used: formId
+            });
+          }
         }
 
         setIsSubmitted(true);
