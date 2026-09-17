@@ -62,17 +62,22 @@ function doPost(e) {
     var tipoLead = data.leadType || data.tipo_lead || data.lead_type || "";
     
     // Classificação estrita pelo faturamento para a Coluna L (caso venha vazio):
-    // ainda nao fatura 35 mil: C
-    // fatura de 35 a 50 mil: B
-    // fatura acima de 50 mil: A
+    // Menos de 35: D
+    // 35 a 50: C
+    // 50 a 100: B
+    // Acima de 100: A
     if (!tipoLead && faturamento) {
       var fatLower = String(faturamento).toLowerCase();
-      if (fatLower.indexOf("acima de 50") !== -1 || fatLower.indexOf("> 50") !== -1 || fatLower.indexOf("mais de 50") !== -1) {
+      if (fatLower.indexOf("menos de") !== -1 || fatLower.indexOf("< 35") !== -1 || fatLower.indexOf("não atinjo") !== -1 || fatLower.indexOf("nao atinjo") !== -1) {
+        tipoLead = "D";
+      } else if (fatLower.indexOf("acima de 100") !== -1 || fatLower.indexOf("> 100") !== -1 || fatLower.indexOf("mais de 100") !== -1) {
         tipoLead = "A";
-      } else if ((fatLower.indexOf("35") !== -1 && fatLower.indexOf("50") !== -1) || fatLower.indexOf("35 a 50") !== -1 || fatLower.indexOf("35 à 50") !== -1) {
+      } else if (fatLower.indexOf("50") !== -1 && fatLower.indexOf("100") !== -1) {
         tipoLead = "B";
-      } else {
+      } else if (fatLower.indexOf("35") !== -1 && fatLower.indexOf("50") !== -1) {
         tipoLead = "C";
+      } else {
+        tipoLead = "D";
       }
     }
     
