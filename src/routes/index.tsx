@@ -415,6 +415,9 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
       tipo_lead: leadClass,
       lead_type: leadClass,
 
+      identificacao_lp: "LP FA2",
+      origem_lp: "LP FA2",
+      lp: "LP FA2",
       form_used: formId,
 
       // Parâmetros Meta Conversions API (CAPI)
