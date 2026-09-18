@@ -70,7 +70,7 @@ function doPost(e) {
       var fatLower = String(faturamento).toLowerCase();
       if (fatLower.indexOf("menos de") !== -1 || fatLower.indexOf("< 35") !== -1 || fatLower.indexOf("não atinjo") !== -1 || fatLower.indexOf("nao atinjo") !== -1) {
         tipoLead = "D";
-      } else if (fatLower.indexOf("acima de 100") !== -1 || fatLower.indexOf("> 100") !== -1 || fatLower.indexOf("mais de 100") !== -1) {
+      } else if (fatLower.indexOf("acima de") !== -1 || fatLower.indexOf("> 50") !== -1 || fatLower.indexOf("mais de") !== -1) {
         tipoLead = "A";
       } else if (fatLower.indexOf("50") !== -1 && fatLower.indexOf("100") !== -1) {
         tipoLead = "B";
