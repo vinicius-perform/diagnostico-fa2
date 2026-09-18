@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef, type FormEvent, type ReactNode } from "react";
 import { 
   ArrowRight, 
-  ArrowLeft,
   Play, 
   Check, 
   Instagram, 
@@ -302,7 +301,6 @@ interface MultistepFormCardProps {
 }
 
 function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps) {
-  const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
@@ -310,10 +308,7 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [instagram, setInstagram] = useState("");
-  const [especialidade, setEspecialidade] = useState("");
   const [faturamento, setFaturamento] = useState("");
-  const [investimento, setInvestimento] = useState("");
-  const [gargalo, setGargalo] = useState("");
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let input = e.target.value.replace(/\D/g, "");
@@ -332,7 +327,9 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
     setPhone(formatted || input);
   };
 
-  const handleNextStep = () => {
+  const onSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    
     if (!name || name.trim().length < 3) {
       alert("Por favor, informe seu nome completo.");
       return;
@@ -345,32 +342,12 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
       alert("Por favor, informe um WhatsApp válido com DDD.");
       return;
     }
-    
-    trackCustomEvent("FormStepComplete", { step: 1, form_id: formId });
-    setStep(2);
-  };
-
-  const onSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    
     if (!instagram || instagram.trim().length < 2) {
       alert("Por favor, informe o Instagram da clínica.");
       return;
     }
-    if (!especialidade) {
-      alert("Por favor, selecione a principal especialidade.");
-      return;
-    }
     if (!faturamento) {
       alert("Por favor, selecione a faixa de faturamento mensal.");
-      return;
-    }
-    if (!investimento) {
-      alert("Por favor, selecione o investimento atual em marketing.");
-      return;
-    }
-    if (!gargalo) {
-      alert("Por favor, selecione o principal gargalo da operação.");
       return;
     }
 
@@ -378,18 +355,15 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
     setLeadName(name);
 
     // Classificação estrita pelo faturamento (Coluna L e Meta Pixel):
-    // Menos de 35: D
-    // 35 a 50: C
-    // 50 a 100: B
-    // Acima de 100: A
+    // Faturo menos de R$35 mil: D (Desqualificado)
+    // Faturo entre R$35 a R$50 mil: C (Lead Qualificado C)
+    // Faturo acima de R$50 mil por mês: A (Super Lead A)
     let leadClass: "A" | "B" | "C" | "D" = "D";
     const fatLower = faturamento.toLowerCase();
     if (fatLower.includes("menos de") || fatLower.includes("< 35") || fatLower.includes("não atinjo") || fatLower.includes("nao atinjo")) {
       leadClass = "D";
-    } else if (fatLower.includes("acima de 100") || fatLower.includes("> 100") || fatLower.includes("mais de 100")) {
+    } else if (fatLower.includes("acima de") || fatLower.includes("> 50") || fatLower.includes("mais de") || fatLower.includes("acima de r$50")) {
       leadClass = "A";
-    } else if (fatLower.includes("50") && fatLower.includes("100")) {
-      leadClass = "B";
     } else if (fatLower.includes("35") && fatLower.includes("50")) {
       leadClass = "C";
     } else {
@@ -398,15 +372,10 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
 
     // Cálculo de pontuação (Coluna K)
     let score = 0;
-    if (leadClass === "A") score += 80;
-    else if (leadClass === "B") score += 60;
-    else if (leadClass === "C") score += 40;
-    else score += 10;
-
-    if (investimento === "Acima de R$ 15 mil") score += 20;
-    else if (investimento === "Entre R$ 7 mil e R$ 15 mil") score += 15;
-    else if (investimento === "Entre R$ 3 mil e R$ 7 mil") score += 10;
-    else if (investimento === "Até R$ 3 mil") score += 5;
+    if (leadClass === "A") score = 80;
+    else if (leadClass === "B") score = 60;
+    else if (leadClass === "C") score = 40;
+    else score = 10;
 
     const getCookie = (cName: string) => {
       if (typeof document === "undefined") return "";
@@ -428,9 +397,9 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
       phone: phone,
       clinicInstagram: instagram,
       clinicName: instagram,
-      objective: gargalo,
+      objective: "",
       revenue: faturamento,
-      traffic: investimento,
+      traffic: "",
       score: score,
       leadType: leadClass,
 
@@ -438,10 +407,10 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
       e_mail: email,
       whatsapp: phone,
       instagram_clinica: instagram,
-      especialidade: especialidade,
+      especialidade: "",
       faturamento_mensal: faturamento,
-      investimento_marketing: investimento,
-      objetivo_principal: gargalo,
+      investimento_marketing: "",
+      objetivo_principal: "",
       prazo_inicio: "Imediato",
       tipo_lead: leadClass,
       lead_type: leadClass,
@@ -587,15 +556,11 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
             <button
               onClick={() => {
                 setIsSubmitted(false);
-                setStep(1);
                 setName("");
                 setEmail("");
                 setPhone("");
                 setInstagram("");
-                setEspecialidade("");
                 setFaturamento("");
-                setInvestimento("");
-                setGargalo("");
               }}
               className="absolute top-4 right-4 text-[#667066] hover:text-[#FFFFFF] transition-colors p-1"
             >
@@ -636,15 +601,11 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
             <button
               onClick={() => {
                 setIsSubmitted(false);
-                setStep(1);
                 setName("");
                 setEmail("");
                 setPhone("");
                 setInstagram("");
-                setEspecialidade("");
                 setFaturamento("");
-                setInvestimento("");
-                setGargalo("");
               }}
               className="mt-6 w-full inline-flex h-[52px] items-center justify-center rounded-lg bg-[#8CFF00] font-black uppercase tracking-wider text-[#050705] hover:bg-[#68BF00] transition-all cursor-pointer shadow-md text-xs sm:text-sm"
             >
@@ -653,195 +614,103 @@ function MultistepFormCard({ setLeadName, utms, formId }: MultistepFormCardProps
           </div>
         </div>
       )}
-      <div className="mb-4">
-        <div className="flex items-center justify-between">
-          <span className="inline-flex items-center gap-1.5 rounded bg-[#050705] px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-[#8CFF00]">
-            <Clock className="h-3 w-3" />
-            Leva cerca de 1 minuto
-          </span>
-          <span className="text-[11px] font-bold uppercase tracking-wider text-[#667066]">
-            Etapa {step} de 2
-          </span>
-        </div>
-      </div>
-
-      <div className="mb-5">
-        <div className="h-2 w-full bg-[#DDE2D9] rounded-full overflow-hidden">
-          <div 
-            className="h-full bg-[#8CFF00] transition-all duration-300 rounded-full"
-            style={{ width: `${(step / 2) * 100}%` }}
-          />
-        </div>
+      <div className="mb-5 flex items-center justify-between">
+        <span className="inline-flex items-center gap-1.5 rounded bg-[#050705] px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-[#8CFF00]">
+          <Clock className="h-3 w-3" />
+          Leva cerca de 1 minuto
+        </span>
+        <span className="text-[11px] font-bold uppercase tracking-wider text-[#667066]">
+          Diagnóstico Gratuito
+        </span>
       </div>
 
       <form onSubmit={onSubmit} className="space-y-3.5">
-        {step === 1 && (
-          <div className="space-y-3.5 animate-fade-in">
-            <div>
-              <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#050705] mb-1">
-                Nome Completo *
-              </label>
-              <input 
-                required 
-                type="text" 
-                placeholder="Ex: Dra. Juliana Souza" 
-                value={name}
-                onFocus={() => trackCustomEvent("FormStart", { form_id: formId })}
-                onChange={e => setName(e.target.value)}
-                className={inputCls} 
-              />
-            </div>
+        <div>
+          <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#050705] mb-1">
+            Nome Completo *
+          </label>
+          <input 
+            required 
+            type="text" 
+            placeholder="Ex: Dra. Juliana Souza" 
+            value={name}
+            onFocus={() => trackCustomEvent("FormStart", { form_id: formId })}
+            onChange={e => setName(e.target.value)}
+            className={inputCls} 
+          />
+        </div>
 
-            <div>
-              <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#050705] mb-1">
-                E-mail Principal *
-              </label>
-              <input 
-                required 
-                type="email" 
-                placeholder="Ex: juliana@clinica.com.br" 
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                className={inputCls} 
-              />
-            </div>
+        <div>
+          <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#050705] mb-1">
+            E-mail Principal *
+          </label>
+          <input 
+            required 
+            type="email" 
+            placeholder="Ex: juliana@clinica.com.br" 
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            className={inputCls} 
+          />
+        </div>
 
-            <div>
-              <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#050705] mb-1">
-                WhatsApp com DDD *
-              </label>
-              <input 
-                required 
-                type="tel" 
-                placeholder="Ex: (11) 99999-9999" 
-                value={phone}
-                onChange={handlePhoneChange}
-                className={inputCls} 
-              />
-            </div>
+        <div>
+          <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#050705] mb-1">
+            WhatsApp com DDD *
+          </label>
+          <input 
+            required 
+            type="tel" 
+            placeholder="Ex: (11) 99999-9999" 
+            value={phone}
+            onChange={handlePhoneChange}
+            className={inputCls} 
+          />
+        </div>
 
-            <button
-              type="button"
-              onClick={handleNextStep}
-              className="mt-2 w-full inline-flex h-[54px] items-center justify-center gap-2 rounded-lg bg-[#8CFF00] px-6 text-xs sm:text-sm font-black uppercase tracking-wider text-[#050705] transition-all hover:bg-[#68BF00] cursor-pointer shadow-md"
-            >
-              CONTINUAR PARA MINHA ANÁLISE
+        <div>
+          <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#050705] mb-1">
+            Instagram da Clínica *
+          </label>
+          <input 
+            required 
+            type="text" 
+            placeholder="Ex: @clinicasouzaestetica" 
+            value={instagram}
+            onChange={e => setInstagram(e.target.value)}
+            className={inputCls} 
+          />
+        </div>
+
+        <div>
+          <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#050705] mb-1">
+            Faturamento Médio Mensal *
+          </label>
+          <select required value={faturamento} onChange={e => setFaturamento(e.target.value)} className={inputCls}>
+            <option value="" disabled>Selecione a faixa de faturamento</option>
+            <option value="Faturo menos de R$35 mil">Faturo menos de R$35 mil</option>
+            <option value="Faturo entre R$35 a R$50 mil">Faturo entre R$35 a R$50 mil</option>
+            <option value="Faturo acima de R$50 mil por mês">Faturo acima de R$50 mil por mês</option>
+          </select>
+        </div>
+
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="mt-2 w-full inline-flex h-[54px] items-center justify-center gap-2 rounded-lg bg-[#8CFF00] px-6 text-xs sm:text-sm font-black uppercase tracking-wider text-[#050705] transition-all hover:bg-[#68BF00] cursor-pointer shadow-md disabled:opacity-50"
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Processando...
+            </>
+          ) : (
+            <>
+              SOLICITAR MEU DIAGNÓSTICO GRATUITO
               <ArrowRight className="h-4.5 w-4.5" />
-            </button>
-          </div>
-        )}
-
-        {step === 2 && (
-          <div className="space-y-3 animate-fade-in">
-            <div>
-              <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#050705] mb-1">
-                Instagram da Clínica *
-              </label>
-              <input 
-                required 
-                type="text" 
-                placeholder="Ex: @clinicasouzaestetica" 
-                value={instagram}
-                onChange={e => setInstagram(e.target.value)}
-                className={inputCls} 
-              />
-            </div>
-
-            <div>
-              <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#050705] mb-1">
-                Principal Especialidade *
-              </label>
-              <select required value={especialidade} onChange={e => setEspecialidade(e.target.value)} className={inputCls}>
-                <option value="" disabled>Selecione uma especialidade</option>
-                <option>Harmonização facial</option>
-                <option>Full Face / Face to Face</option>
-                <option>Harmonização corporal</option>
-                <option>Remodelação corporal</option>
-                <option>Procedimentos glúteos</option>
-                <option>Odontologia estética</option>
-                <option>Dermatologia estética</option>
-                <option>Cirurgia plástica</option>
-                <option>Emagrecimento</option>
-                <option>Estética avançada</option>
-                <option>Outra especialidade</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#050705] mb-1">
-                Faturamento Médio Mensal *
-              </label>
-              <select required value={faturamento} onChange={e => setFaturamento(e.target.value)} className={inputCls}>
-                <option value="" disabled>Selecione a faixa de faturamento</option>
-                <option value="Faturo menos de R$ 35 mil">Faturo menos de R$ 35 mil</option>
-                <option value="Faturo de R$ 35 mil a R$ 50 mil">Faturo de R$ 35 mil a R$ 50 mil</option>
-                <option value="Faturo de R$ 50 mil a R$ 100 mil">Faturo de R$ 50 mil a R$ 100 mil</option>
-                <option value="Faturo acima de R$ 100 mil">Faturo acima de R$ 100 mil</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#050705] mb-1">
-                Investimento Atual em Marketing *
-              </label>
-              <select required value={investimento} onChange={e => setInvestimento(e.target.value)} className={inputCls}>
-                <option value="" disabled>Selecione a verba de anúncios</option>
-                <option>Ainda não invisto</option>
-                <option>Até R$ 3 mil</option>
-                <option>Entre R$ 3 mil e R$ 7 mil</option>
-                <option>Entre R$ 7 mil e R$ 15 mil</option>
-                <option>Acima de R$ 15 mil</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-[11px] font-extrabold uppercase tracking-wider text-[#050705] mb-1">
-                Principal Gargalo da Operação *
-              </label>
-              <select required value={gargalo} onChange={e => setGargalo(e.target.value)} className={inputCls}>
-                <option value="" disabled>Qual o maior desafio hoje?</option>
-                <option>Posicionamento e conteúdo</option>
-                <option>Geração de leads</option>
-                <option>Qualidade dos leads</option>
-                <option>Agendamento de consultas</option>
-                <option>Atendimento dos contatos</option>
-                <option>Follow-up</option>
-                <option>Conversão em procedimentos</option>
-                <option>Falta de dados</option>
-                <option>Dependência de indicações</option>
-                <option>Não sei identificar</option>
-              </select>
-            </div>
-
-            <div className="flex gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setStep(1)}
-                className="inline-flex h-[54px] w-14 shrink-0 items-center justify-center rounded-lg border border-[#DDE2D9] bg-[#FFFFFF] text-[#050705] hover:bg-[#DDE2D9] transition-all cursor-pointer"
-                title="Voltar para etapa anterior"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="inline-flex h-[54px] flex-grow items-center justify-center gap-2 rounded-lg bg-[#8CFF00] px-4 text-xs sm:text-sm font-black uppercase tracking-wider text-[#050705] transition-all hover:bg-[#68BF00] cursor-pointer shadow-md disabled:opacity-50"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Processando...
-                  </>
-                ) : (
-                  <>
-                    QUERO IDENTIFICAR MEUS GARGALOS
-                    <ArrowRight className="h-4.5 w-4.5" />
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        )}
+            </>
+          )}
+        </button>
 
         <div className="mt-4 pt-3 border-t border-[#DDE2D9] text-center space-y-1">
           <p className="text-xs font-bold text-[#050705]">
